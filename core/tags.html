@@ -1,0 +1,312 @@
+<payment-status>
+
+<!-- <div class="payment__info" if={ status == 'need3ds' }>Для оплаты требуется проверка 3DS</div> -->
+<div class="payment__info" if={ status == 'error' }>{ payment.pg_error_description }</div>
+<div class="payment__info" if={ status == 'new' }>На проведение платежа выделяется 20 мин или 3 попытки</div>
+
+<div class="payment__3ds" if={ status == 'need3ds'}>
+<form target="3dsCheck" method="post" ref="form3ds" action={ payment.pg_3ds_acsurl }>
+<input type="hidden" name="MD" value={ payment.pg_3ds_md } />
+<input type="hidden" name="PaReq" value={ payment.pg_3ds_pareq } />
+<input type="hidden" name="TermUrl" value={ payment.pg_3ds_temp_url } />
+</form>
+<iframe src="" name="3dsCheck" id="3dsCheck" />
+</div>
+
+<div class="payment__status" if={ status == 'success' }>
+<div class="payment__info">Ваш заказ успешно обработан</div>
+<br/>
+<p>Номер заказа: <span class="payment__status__val">{ payment.pg_payment_id }</span></p>
+<p>Сумма: <span class="payment__status__val">{ payment.pg_amount } {{ payment.pg_currency }}</span></p>
+<strong class="payment__status__header">Плательщик</strong>
+ <p>Имя: <span class="payment__status__val">{ payment.pg_card_name }</span></p>
+ <p>Номер платежной карты:	<span class="payment__status__val">{ payment.pg_card_hash }</span></p>
+ <p>e-mail:	<span class="payment__status__val">{ payment.pg_user_email }</span></p>
+</div>
+
+<script>
+this.payment = opts.payment;
+this.status = opts.status;
+
+this.on('update', function() {
+	this.status = opts.status;
+	this.payment = opts.payment;
+}.bind(this));
+
+this.on('updated', function() {
+	if (this.status == 'need3ds') {
+		var form3ds = this.refs.form3ds;
+		// Показываем форму 3ds
+		form3ds.submit();
+	}
+});
+</script>
+
+<style>
+.payment__info {
+	border: 1px solid #a0afbd;
+    padding: 5px 15px;
+    text-align: center;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    background-color: #eee;
+    font-family: 'LatoBold';
+    font-size: .7em;
+    color: #515f6d;
+    width: 60%;
+}
+.payment__status {
+	font-family: 'LatoBold';
+	color: #515f6d;
+}
+.payment__status__header {
+	font-size: 1.1rem;
+	margin: 10px 0px;
+	font-family: 'RalewayBold';
+	display: block;
+}
+.payment__status__val {
+	color: #000;
+}
+p {
+	margin: 3px 0px;
+}
+.payment__3ds {
+  text-align: center;
+}
+
+.payment__3ds iframe {
+  border: 0;
+  width: 100%;
+  min-height: 500px;
+  overflow: scroll;
+}
+</style>
+</payment-status>
+
+<payment-card>
+<div class="payment payment-card panel" id="tab1">
+
+<div class="payment__header">
+<div class="payment__title">Оплата банковской картой <a href="#popInst" class="help payment__help">?</a></div>
+</div>
+
+<div class="payment__body">
+<payment-status payment={ payment_result } status={ payment_status }></payment-status>
+</div>
+
+<div class="payment-card__status payment-card__status_waiting" ref="loader">
+<img src="/assets/payment_page/img/loader.gif"/>
+</div>
+
+<form id="tab1_form" method="post" class="payment-card__form payment__body" ref="payment_form">
+<div class="">
+<div class="left bank-card__card">
+<input type="hidden" name="customer" value="{ customer }" class="bank-card__customer">
+<!--
+<div class="title"><div id="mmenu-btn" class="btn-mmebu-back"></div>Оплата банковской картой <a href="#popInst" class="help">?</a></div>
+<div class="info">{ payment_message }</div>
+-->
+<div class="cards-wrap">
+<div class="card">
+<div class="row bank-card__header">
+<!--<div class="to">Отправитель</div>-->
+<!-- <div class="img-wrap"> -->
+<img src="/assets/payment_page/img/set.png" alt=""/>
+<!--
+<div class="ico-americanexpress"></div>
+<div class="ico-unionpay"></div>
+<div class="ico-visa"></div>
+<div class="ico-mastercard"></div>
+<div class="ico-maestro"></div>
+-->
+<!-- </div> -->
+</div>
+<div class="row numcard bank-card__pan">
+<p class="bank-card__title">Номер карты</p>
+<span><input type="tel" ref="card_number_1" minlength="4" maxlength="4" class="inputnum" autocomplete="off" pattern="\d*" placeholder="" value=""></span>
+<span><input type="tel" ref="card_number_2" minlength="4" maxlength="4" class="inputnum" autocomplete="off" pattern="\d*" placeholder="" value=""></span>
+<span><input type="tel" ref="card_number_3" minlength="4" maxlength="4" class="inputnum" autocomplete="off" pattern="\d*" placeholder="" value=""></span>
+<span><input type="tel" ref="card_number_4" minlength="4" maxlength="4" class="inputnum" autocomplete="off" pattern="\d*" placeholder="" value=""></span>
+</div>
+<div class="row namecard bank-card__bottom">
+<div class="block bank-card__holder">
+<p class="bank-card__title">имя на карте</p>
+<input type="text" class="inputnum" ref="user_name" placeholder="" value="">
+</div>
+<div class="block bank-card__exp">
+<p class="bank-card__title">Срок действия карты</p>
+<input type="tel" name="card-expiry-month" minlength="2" maxlength="2" class="inputnum sm-input" ref="card_exp_month" autocomplete="off" pattern="\d*" placeholder="" value=""> 
+<span>/</span><input type="tel" name="card-expiry-year" minlength="2" maxlength="2" class="inputnum sm-input" ref="card_exp_year" autocomplete="off" pattern="\d*" placeholder="" value="">
+</div>
+</div>
+<!--
+<div class="row check-wrap">
+<input type="checkbox" id="card2" name="card2" class="checkbox">
+<label for="card2">Запомнить Вашу карту?</label>
+</div>
+-->
+</div>
+
+<div class="card back">
+<div class="block">
+<p>CVV/CVC код</p>
+<div class="line">
+<input type="password" name="card-cvc" minlength="3" maxlength="3" class="inputnum sm-input" ref="card_cvv" autocomplete="off" pattern="\d*" placeholder="" value="">
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="right" if={ false }>
+<div class="scan-wrap tooltip">
+<div class="logo-wrap">
+<img src="/assets/payment_page/img/bank.png" alt="">
+</div> <!-- /.logo-wrap -->
+<div class="img-wrap">
+<a href="#scanCard" class="scan"><img src="/assets/payment_page/img/mobile-scan.png" alt=""></a>
+</div> <!-- /.img-wrap -->
+<span class="tooltiptext">
+Для упрощения ввода данных карты нажмите на кнопку и подведите карту к камере ноутбука или телефона для автоматического заполнения полей
+</span> <!-- /.tooltiptext -->
+</div> <!-- /.scan-wrap -->
+</div> <!-- /.right -->
+
+
+<div class="bottom payment__footer">
+<div class="b-left">
+<div class="box">
+<p>Номер телефона: <span>*</span></p>
+<div class="radio-wrap">
+<div class="input-round input-tel">
+<div class="input-tel__country">+7</div>
+<div class="input-tel__provider">(<input ref="user_phone_provider" value="{ phone_provider }" minlength="3" maxlength="3" placeholder="..." />)</div>
+<div class="input-tel__number"><input ref="user_phone_number" value="{ phone_number }" minlength="7" maxlength="7" placeholder="......."/></div>
+</div>
+<span>Нужен для отслеживания статуса платежа</span>
+</div>
+</div>
+<div class="box">
+<p>E-mail: <span>*</span></p>
+<div class="radio-wrap">
+<input class="email" ref="user_email" name="user-email" placeholder="" value="{ user_email }">
+<span>Нужен для оповещения результат платежа</span>
+</div>
+</div>
+<div class="box-check">
+<input type="checkbox" id="tab1b-check" class="checkbox check-email" name="email-notice" ref="email_notice" checked="true" value="1">
+<label for="tab1b-check">Прислать на мой E-mail информацию об оплате</label>
+</div>
+</div>
+<div class="b-right">
+<div class="summ total">
+<b>Сумма заказа:</b>
+<div class="val">
+<div id="totalVal2">{ amount }</div>
+<span>kzt</span>
+</div>
+</div>
+<a href="#" class="btn-pay tablink icon icon-6" onclick={ pay }>Оплатить</a>
+</div>
+</div>
+</div>
+</form>
+
+</div> <!-- /.bank-card -->
+
+<script>
+this.customer = opts.customer;
+this.amount  = opts.amount;
+this.payment_status = opts.status;
+this.user_email = opts.email;
+// +77772553555
+this.phone_provider = opts.phone.substring(0, 3);
+this.phone_number = opts.phone.substring(3);
+
+this.on('mount', function() {
+	var charLimit = 4;
+	$('.numcard').autoFocus();
+	$('.input-tel').autoFocus();
+})
+
+pay(e) {
+	e.preventUpdate = true;
+	$(this.refs.loader).show();
+	$(this.refs.payment_form).hide();
+
+	var card_number = this.refs.card_number_1.value + this.refs.card_number_2.value + this.refs.card_number_3.value + this.refs.card_number_4.value;
+	var phone_number = '+7' + this.refs.user_phone_provider.value + this.refs.user_phone_number.value;
+
+	var data = {
+		'customer': opts.customer,
+		'card-number': card_number,
+		'user-phone': phone_number,
+		'card-name': this.refs.user_name.value,
+		'user-email': this.refs.user_email.value,
+		'email-notice': this.refs.email_notice.checked ? 1 : 0,
+		'card-expiry-year': this.refs.card_exp_year.value,
+		'card-expiry-month': this.refs.card_exp_month.value,
+		'card-cvc': this.refs.card_cvv.value
+	};
+
+	//console.log(data);
+
+	$.post('/payment/on-page', data, function(res) {
+		//console.log(res);
+		$(this.refs.loader).hide();
+		this.payment_status = res.pg_status;
+		this.payment_result = res;
+
+		// Требуется 3ds проверка
+		if (res.pg_3ds == '1' && res.pg_status == 'process') {
+			this.payment_status = 'need3ds';
+		}
+		else
+		if (res.pg_status == 'error') {
+			$(this.refs.payment_form).show();
+		}
+
+		this.update();
+
+	}.bind(this));
+}
+</script>
+
+<style>
+.payment__header {
+	width: 65%;
+    margin: 0px 15px;
+}
+.payment__title {
+	font-size: 1.1em;
+    font-family: 'RalewayBold';
+    margin-bottom: 5px;
+    color: #515f6d;
+    margin: 10px 0px;
+}
+.payment__body {
+	margin: 0px 15px;
+}
+.payment__body .left {
+	padding-left: 0px !important;
+}
+.payment__footer {
+	margin-left: -15px !important;
+}
+.payment__help {
+    margin-left: 5px;
+    height: 13px;
+    width: 13px;
+    font-size: .5em;
+    line-height: 1.6em;
+    position: absolute;
+    margin-top: 4px;
+}
+.payment-card__status_waiting {
+  text-align: center;
+  display: none;
+  margin: 40px 0px;
+}
+</style>
+</payment-card>
